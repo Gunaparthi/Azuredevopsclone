@@ -4,6 +4,7 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/java
 
 trigger:
+<<<<<<< HEAD
 - master
 
 pool:
@@ -20,3 +21,53 @@ steps:
     publishJUnitResults: true
     testResultsFiles: '**/surefire-reports/TEST-*.xml'
     goals: 'package'
+=======
+  - master
+
+pool:
+  name: MySelfHostedPool
+
+steps:
+  - checkout: self
+    persistCredentials: true
+
+  - task: JavaToolInstaller@0
+    inputs:
+      versionSpec: '11'
+      jdkArchitectureOption: 'x64'
+      jdkSourceOption: 'PreInstalled'
+
+  - task: Maven@3
+    inputs:
+      mavenPomFile: 'pom.xml'
+      mavenOptions: '-Xmx3072m'
+      javaHomeOption: 'JDKVersion'
+      jdkVersionOption: '1.11'
+      jdkArchitectureOption: 'x64'
+      publishJUnitResults: true
+      testResultsFiles: '**/surefire-reports/TEST-*.xml'
+      goals: 'package'
+
+  - task: CopyFiles@2
+    inputs:
+      Contents: '**/*.war'
+      TargetFolder: '$(build.artifactstagingdirectory)'
+
+  - task: PublishBuildArtifacts@1
+    inputs:
+      PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+      ArtifactName: 'WarfileG'
+      publishLocation: 'Container'
+
+  - script: |
+      git config user.email "buildagent@devops.com"
+      git config user.name "Azure DevOps Agent"
+
+      git remote set-url origin https://$(GITHUBPAT)@github.com/Gunaparthi/Azuredevopsclone.git
+      git checkout master
+      git pull origin master --rebase
+      git add .
+      git commit -m "Automated update from Azure DevOps pipeline" || echo "No changes to commit"
+      git push origin HEAD:master
+    displayName: "Commit and push changes to GitHub"
+>>>>>>> 3971d8b (Final Updated azure-pipelines.yml)
